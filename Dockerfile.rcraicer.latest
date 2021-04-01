@@ -2,14 +2,12 @@
 # this dockerfile roughly follows the 'Install ROS From Source' procedures from:
 #   https://index.ros.org/doc/ros2/Installation/Foxy/Linux-Development-Setup/
 #
-ARG BASE_IMAGE=ros:foxy-ros-base-l4t-r32.4.4
+ARG BASE_IMAGE=ros:rcraicer-base
 FROM ${BASE_IMAGE}
 
 ARG ROS_PKG=ros_base
 ENV ROS_DISTRO=foxy
 ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
-ENV ROS_WS = /root/ros2_ws
-ENV ROS_WS_SRC = ${ROS_WS}/src
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -20,13 +18,13 @@ RUN locale-gen en_US en_US.UTF-8 && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.
 ENV LANG=en_US.UTF-8
 
 # update rcraicer packages
-RUN cd ${ROS_WS_SRC}/rcraicer && \	
+RUN cd /root/ros2_ws/src/rcraicer && \	
 	git pull && \
-	cd ${ROS_WS_SRC}/rcraicer_description && \
+	cd /root/ros2_ws/src/rcraicer_description && \
 	git pull && \
-	cd ${ROS_WS_SRC}/rcraicer_msgs && \
+	cd /root/ros2_ws/src/rcraicer_msgs && \
 	git pull && \	
-	cd ${ROS_WS} && \	
+	cd /root/ros2_ws && \	
 	/bin/bash -c "source ${ROS_ROOT}/install/setup.bash;colcon build --symlink-install"		
 
 ENTRYPOINT ["/ros_entrypoint.sh"]
