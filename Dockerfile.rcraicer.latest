@@ -8,6 +8,8 @@ FROM ${BASE_IMAGE}
 ARG ROS_PKG=ros_base
 ENV ROS_DISTRO=foxy
 ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
+ENV ROS_WS = /root/ros2_ws
+ENV ROS_WS_SRC = ${ROS_WS}/src
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -17,18 +19,15 @@ WORKDIR /workspace
 RUN locale-gen en_US en_US.UTF-8 && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
 ENV LANG=en_US.UTF-8
 
-# setup rcraicer packages
-RUN cd /root && \
-	mkdir -p ros2_ws/src && \
-	cd ros2_ws/src && \
-	git clone https://github.com/ljb2208/rcraicer_description.git && \
-	git clone https://github.com/ljb2208/rcraicer_msgs.git && \
-	git clone https://github.com/ljb2208/rcraicer && \
-	cd /root/ros2_ws && \	
-	/bin/bash -c "source ${ROS_ROOT}/install/setup.bash;colcon build --symlink-install"	
-	
-
-RUN echo 'source /root/ros2_ws/install/local_setup.bash' >> /root/.bashrc	
+# update rcraicer packages
+RUN cd ${ROS_WS_SRC}/rcraicer && \	
+	git merge && \
+	cd ${ROS_WS_SRC}/rcraicer_description && \
+	git merge && \
+	cd ${ROS_WS_SRC}/rcraicer_msgs && \
+	git merge && \	
+	cd ${ROS_WS} && \	
+	/bin/bash -c "source ${ROS_ROOT}/install/setup.bash;colcon build --symlink-install"		
 
 ENTRYPOINT ["/ros_entrypoint.sh"]
 CMD ["bash"]
