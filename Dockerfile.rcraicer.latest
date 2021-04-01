@@ -21,11 +21,11 @@ ENV LANG=en_US.UTF-8
 
 # update rcraicer packages
 RUN cd ${ROS_WS_SRC}/rcraicer && \	
-	git merge && \
+	git pull && \
 	cd ${ROS_WS_SRC}/rcraicer_description && \
-	git merge && \
+	git pull && \
 	cd ${ROS_WS_SRC}/rcraicer_msgs && \
-	git merge && \	
+	git pull && \	
 	cd ${ROS_WS} && \	
 	/bin/bash -c "source ${ROS_ROOT}/install/setup.bash;colcon build --symlink-install"		
 
