@@ -12,4 +12,4 @@ echo "base image..." $BASE_IMAGE
 
 TO_BUILD=($ROS_DISTRO)
 
-sh ./scripts/docker_build.sh ros:rcraicer-latest Dockerfile.rcraicer.latest --build-arg BASE_IMAGE=$BASE_IMAGE
+sh ./scripts/docker_build_nocache.sh ros:rcraicer-latest Dockerfile.rcraicer.latest --build-arg BASE_IMAGE=$BASE_IMAGE
