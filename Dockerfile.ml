@@ -35,7 +35,7 @@ ENV CUDA_HOME="/usr/local/cuda"
 ENV PATH="/usr/local/cuda/bin:${PATH}"
 ENV LD_LIBRARY_PATH="/usr/local/cuda/lib64:${LD_LIBRARY_PATH}"
 ENV LLVM_CONFIG="/usr/bin/llvm-config-9"
-ARG MAKEFLAGS=-j6
+ARG MAKEFLAGS=-j$(nproc) 
 
 RUN printenv
 
@@ -74,24 +74,6 @@ RUN apt-get update && \
 
 
 #
-# OpenCV
-#
-ARG L4T_APT_KEY
-ARG L4T_APT_SOURCE
-
-COPY jetson-ota-public.asc /etc/apt/trusted.gpg.d/jetson-ota-public.asc
-
-RUN echo "$L4T_APT_SOURCE" > /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
-    cat /etc/apt/sources.list.d/nvidia-l4t-apt-source.list && \
-    apt-get update && \
-    apt-get install -y --no-install-recommends \
-            libopencv-dev \
-		  libopencv-python \
-    && rm /etc/apt/sources.list.d/nvidia-l4t-apt-source.list \
-    && rm -rf /var/lib/apt/lists/*
-
-
-#
 # python packages from TF/PyTorch containers
 #
 COPY --from=tensorflow /usr/local/lib/python2.7/dist-packages/ /usr/local/lib/python2.7/dist-packages/
@@ -104,47 +86,50 @@ COPY --from=pytorch /usr/local/lib/python3.6/dist-packages/ /usr/local/lib/pytho
 #
 # python pip packages
 #
-RUN pip3 install pybind11 --ignore-installed
-RUN pip3 install onnx --verbose
-RUN pip3 install scipy --verbose
-RUN pip3 install scikit-learn --verbose
-RUN pip3 install pandas --verbose
-RUN pip3 install pycuda --verbose
-RUN pip3 install numba --verbose
-
-
-#
-# restore missing cuDNN headers
-#
-#RUN ln -s /usr/include/aarch64-linux-gnu/cudnn_v8.h /usr/include/cudnn.h && \
-#    ln -s /usr/include/aarch64-linux-gnu/cudnn_version_v8.h /usr/include/cudnn_version.h && \
-#    ln -s /usr/include/aarch64-linux-gnu/cudnn_backend_v8.h /usr/include/cudnn_backend.h && \
-#    ln -s /usr/include/aarch64-linux-gnu/cudnn_adv_infer_v8.h /usr/include/cudnn_adv_infer.h && \
-#    ln -s /usr/include/aarch64-linux-gnu/cudnn_adv_train_v8.h /usr/include/cudnn_adv_train.h && \
-#    ln -s /usr/include/aarch64-linux-gnu/cudnn_cnn_infer_v8.h /usr/include/cudnn_cnn_infer.h && \
-#    ln -s /usr/include/aarch64-linux-gnu/cudnn_cnn_train_v8.h /usr/include/cudnn_cnn_train.h && \
-#    ln -s /usr/include/aarch64-linux-gnu/cudnn_ops_infer_v8.h /usr/include/cudnn_ops_infer.h && \
-#    ln -s /usr/include/aarch64-linux-gnu/cudnn_ops_train_v8.h /usr/include/cudnn_ops_train.h && \
-#    ls -ll /usr/include/cudnn*
+RUN pip3 install --no-cache-dir --ignore-installed pybind11 
+RUN pip3 install --no-cache-dir --verbose onnx
+RUN pip3 install --no-cache-dir --verbose scipy
+RUN pip3 install --no-cache-dir --verbose scikit-learn
+RUN pip3 install --no-cache-dir --verbose pandas
+RUN pip3 install --no-cache-dir --verbose pycuda
+RUN pip3 install --no-cache-dir --verbose numba
 
 
 #
 # CuPy
 #
+ARG CUPY_VERSION=v9.2.0
 ARG CUPY_NVCC_GENERATE_CODE="arch=compute_53,code=sm_53;arch=compute_62,code=sm_62;arch=compute_72,code=sm_72"
-ENV CUB_PATH="/opt/cub"
-#ARG CFLAGS="-I/opt/cub"
-#ARG LDFLAGS="-L/usr/lib/aarch64-linux-gnu"
 
-RUN git clone https://github.com/NVlabs/cub opt/cub && \
-    git clone -b v8.0.0b4 https://github.com/cupy/cupy cupy && \
+RUN git clone -b ${CUPY_VERSION} --recursive https://github.com/cupy/cupy cupy && \
     cd cupy && \
-    pip3 install fastrlock && \
+    pip3 install --no-cache-dir fastrlock && \
     python3 setup.py install --verbose && \
     cd ../ && \
     rm -rf cupy
 
-#RUN pip3 install cupy --verbose
+
+#
+# install OpenCV (with CUDA)
+# note:  do this after numba, because this installs TBB and numba complains about old TBB
+#
+ARG OPENCV_URL=https://nvidia.box.com/shared/static/5v89u6g5rb62fpz4lh0rz531ajo2t5ef.gz
+ARG OPENCV_DEB=OpenCV-4.5.0-aarch64.tar.gz
+
+RUN mkdir opencv && \
+    cd opencv && \
+    wget --quiet --show-progress --progress=bar:force:noscroll --no-check-certificate ${OPENCV_URL} -O ${OPENCV_DEB} && \
+    tar -xzvf ${OPENCV_DEB} && \
+    dpkg -i --force-depends *.deb && \
+    apt-get update && \
+    apt-get install -y -f --no-install-recommends && \
+    dpkg -i *.deb && \
+    rm -rf /var/lib/apt/lists/* && \
+    apt-get clean && \
+    cd ../ && \
+    rm -rf opencv && \
+    cp -r /usr/include/opencv4 /usr/local/include/opencv4 && \
+    cp -r /usr/lib/python3.6/dist-packages/cv2 /usr/local/lib/python3.6/dist-packages/cv2
 
 
 #
@@ -155,7 +140,7 @@ RUN curl -sL https://deb.nodesource.com/setup_10.x | bash - && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/* && \
     apt-get clean && \
-    pip3 install jupyter jupyterlab==2.2.9 --verbose && \
+    pip3 install --no-cache-dir --verbose jupyter jupyterlab==2.2.9 && \
     jupyter labextension install @jupyter-widgets/jupyterlab-manager
     
 RUN jupyter lab --generate-config

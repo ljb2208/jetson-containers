@@ -1,12 +1,12 @@
 #
 # this dockerfile roughly follows the 'Install ROS From Source' procedures from:
-#   https://index.ros.org/doc/ros2/Installation/Foxy/Linux-Development-Setup/
+#   https://docs.ros.org/en/galactic/Installation/Ubuntu-Development-Setup.html
 #
 ARG BASE_IMAGE=nvcr.io/nvidia/l4t-base:r32.5.0
 FROM ${BASE_IMAGE}
 
 ARG ROS_PKG=ros_base
-ENV ROS_DISTRO=foxy
+ENV ROS_DISTRO=galactic
 ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -103,21 +103,8 @@ RUN apt-get purge -y '*opencv*' || echo "previous OpenCV installation not found"
     rm -rf opencv && \
     cp -r /usr/include/opencv4 /usr/local/include/opencv4 && \
     cp -r /usr/lib/python3.6/dist-packages/cv2 /usr/local/lib/python3.6/dist-packages/cv2
-	
-	
-# 
-# compile yaml-cpp-0.6, which some ROS packages may use (but is not in the 18.04 apt repo)
-#
-RUN git clone --branch yaml-cpp-0.6.0 https://github.com/jbeder/yaml-cpp yaml-cpp-0.6 && \
-    cd yaml-cpp-0.6 && \
-    mkdir build && \
-    cd build && \
-    cmake -DBUILD_SHARED_LIBS=ON .. && \
-    make -j$(nproc) && \
-    cp libyaml-cpp.so.0.6.0 /usr/lib/aarch64-linux-gnu/ && \
-    ln -s /usr/lib/aarch64-linux-gnu/libyaml-cpp.so.0.6.0 /usr/lib/aarch64-linux-gnu/libyaml-cpp.so.0.6
-
-
+    
+    
 # 
 # download/build ROS from source
 #
@@ -147,11 +134,7 @@ RUN mkdir -p ${ROS_ROOT}/src && \
 		> ros2.${ROS_DISTRO}.${ROS_PKG}.rosinstall && \
     cat ros2.${ROS_DISTRO}.${ROS_PKG}.rosinstall && \
     vcs import src < ros2.${ROS_DISTRO}.${ROS_PKG}.rosinstall && \
-    
-    # patch libyaml - https://github.com/dusty-nv/jetson-containers/issues/41#issuecomment-774767272
-    rm ${ROS_ROOT}/src/libyaml_vendor/CMakeLists.txt && \
-    wget --no-check-certificate https://raw.githubusercontent.com/ros2/libyaml_vendor/master/CMakeLists.txt -P ${ROS_ROOT}/src/libyaml_vendor/ && \
-    
+
     # install dependencies using rosdep
     apt-get update && \
     cd ${ROS_ROOT} && \
@@ -173,8 +156,8 @@ RUN mkdir -p ${ROS_ROOT}/src && \
     rm -rf ${ROS_ROOT}/logs && \
     rm -rf ${ROS_ROOT}/build && \
     rm ${ROS_ROOT}/*.rosinstall
-
-
+    
+    
 #
 # fix broken package.xml in test_pluginlib that crops up if/when rosdep is run again
 #
@@ -182,7 +165,7 @@ RUN mkdir -p ${ROS_ROOT}/src && \
 #   Package 'test_pluginlib' must declare at least one maintainer
 #   The package node must contain at least one "license" tag
 #
-#RUN TEST_PLUGINLIB_PACKAGE="${ROS_ROOT}/build/pluginlib/prefix/share/test_pluginlib/package.xml" && \
+#RUN TEST_PLUGINLIB_PACKAGE="${ROS_ROOT}/build/pluginlib/pluginlib_enable_plugin_testing/install/test_pluginlib__test_pluginlib/share/test_pluginlib/package.xml" && \
 #    sed -i '/<\/description>/a <license>BSD<\/license>' $TEST_PLUGINLIB_PACKAGE && \
 #    sed -i '/<\/description>/a <maintainer email="michael@openrobotics.org">Michael Carroll<\/maintainer>' $TEST_PLUGINLIB_PACKAGE && \
 #    cat $TEST_PLUGINLIB_PACKAGE
@@ -194,8 +177,8 @@ RUN mkdir -p ${ROS_ROOT}/src && \
 #
 ENV RMW_IMPLEMENTATION=rmw_cyclonedds_cpp
 
-    
-# 
+
+#
 # setup entrypoint
 #
 COPY ./packages/ros_entrypoint.sh /ros_entrypoint.sh

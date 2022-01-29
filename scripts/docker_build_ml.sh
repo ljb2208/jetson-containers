@@ -84,6 +84,14 @@ if [[ "$CONTAINERS" == "pytorch" || "$CONTAINERS" == "all" ]]; then
 				"v0.9.0" \
 				"pillow" \
 				"v0.8.0"
+		
+	# PyTorch v1.9.0
+	build_pytorch "https://nvidia.box.com/shared/static/h1z9sw4bb1ybi0rm3tu8qdj8hs05ljbm.whl" \
+				"torch-1.9.0-cp36-cp36m-linux_aarch64.whl" \
+				"l4t-pytorch:r$L4T_VERSION-pth1.9-py3" \
+				"v0.10.0" \
+				"pillow" \
+				"v0.9.0"
 fi
 
 #			  
@@ -96,7 +104,7 @@ build_tensorflow()
 	local tensorflow_tag=$3
 	
 	echo "building TensorFlow $tensorflow_whl, $tensorflow_tag"
-
+	
 	sh ./scripts/docker_build.sh $tensorflow_tag Dockerfile.tensorflow \
 		--build-arg BASE_IMAGE=$BASE_IMAGE \
 		--build-arg TENSORFLOW_URL=$tensorflow_url \
@@ -107,33 +115,51 @@ build_tensorflow()
 
 if [[ "$CONTAINERS" == "tensorflow" || "$CONTAINERS" == "all" ]]; then
 
-	# TensorFlow 1.15.4
-	build_tensorflow "https://developer.download.nvidia.com/compute/redist/jp/v44/tensorflow/tensorflow-1.15.4+nv20.11-cp36-cp36m-linux_aarch64.whl" \
-				  "tensorflow-1.15.4+nv20.11-cp36-cp36m-linux_aarch64.whl" \
-				  "l4t-tensorflow:r$L4T_VERSION-tf1.15-py3"
+	if [[ $L4T_RELEASE -eq 32 ]] && [[ $L4T_REVISION_MAJOR -ge 6 ]]; then
+		# TensorFlow 1.15.5 for JetPack 4.6
+		build_tensorflow "https://nvidia.box.com/shared/static/0e4otnp1pvbo7exwrkermahfrlfe9exo.whl" \
+					  "tensorflow-1.15.5+nv21.7-cp36-cp36m-linux_aarch64.whl" \
+					  "l4t-tensorflow:r$L4T_VERSION-tf1.15-py3"
 
-	# TensorFlow 2.3.1
-	build_tensorflow "https://developer.download.nvidia.com/compute/redist/jp/v44/tensorflow/tensorflow-2.3.1+nv20.11-cp36-cp36m-linux_aarch64.whl" \
-				  "tensorflow-2.3.1+nv20.11-cp36-cp36m-linux_aarch64.whl" \
-				  "l4t-tensorflow:r$L4T_VERSION-tf2.3-py3"
+		# TensorFlow 2.5.0 for JetPack 4.6
+		build_tensorflow "https://nvidia.box.com/shared/static/jfbpcioxcb3d3d3wrm1dbtom5aqq5azq.whl" \
+					  "tensorflow-2.5.0+nv21.7-cp36-cp36m-linux_aarch64.whl" \
+					  "l4t-tensorflow:r$L4T_VERSION-tf2.5-py3"
+	else
+		# TensorFlow 1.15.5 for JetPack 4.4/4.5
+		build_tensorflow "https://developer.download.nvidia.com/compute/redist/jp/v45/tensorflow/tensorflow-1.15.5+nv21.6-cp36-cp36m-linux_aarch64.whl" \
+					  "tensorflow-2.5.0+nv21.6-cp36-cp36m-linux_aarch64.whl" \
+					  "l4t-tensorflow:r$L4T_VERSION-tf1.15-py3"
+
+		# TensorFlow 2.5.0 for JetPack 4.4/4.5
+		build_tensorflow "https://developer.download.nvidia.com/compute/redist/jp/v45/tensorflow/tensorflow-2.5.0+nv21.6-cp36-cp36m-linux_aarch64.whl" \
+					  "tensorflow-2.5.0+nv21.6-cp36-cp36m-linux_aarch64.whl" \
+					  "l4t-tensorflow:r$L4T_VERSION-tf2.5-py3"
+	fi
 fi
+
 
 #
 # Machine Learning
 #
 if [[ "$CONTAINERS" == "all" ]]; then
 
-	# alternate source:  http://repo.download.nvidia.com/jetson/jetson-ota-public.asc
-	cp /etc/apt/trusted.gpg.d/jetson-ota-public.asc .
+	# opencv.csv mounts files that preclude us installing different version of opencv
+	# temporarily disable the opencv.csv mounts while we build the container
+	CV_CSV="/etc/nvidia-container-runtime/host-files-for-container.d/opencv.csv"
+	
+	if [ -f "$CV_CSV" ]; then
+		sudo mv $CV_CSV $CV_CSV.backup
+	fi
 	
 	sh ./scripts/docker_build.sh l4t-ml:r$L4T_VERSION-py3 Dockerfile.ml \
 			--build-arg BASE_IMAGE=$BASE_IMAGE \
-			--build-arg PYTORCH_IMAGE=l4t-pytorch:r$L4T_VERSION-pth1.7-py3 \
-			--build-arg TENSORFLOW_IMAGE=l4t-tensorflow:r$L4T_VERSION-tf1.15-py3 \
-			--build-arg L4T_APT_SOURCE="deb https://repo.download.nvidia.com/jetson/common r32.4 main"
+			--build-arg PYTORCH_IMAGE=l4t-pytorch:r$L4T_VERSION-pth1.9-py3 \
+			--build-arg TENSORFLOW_IMAGE=l4t-tensorflow:r$L4T_VERSION-tf1.15-py3 #\
 
-			#--build-arg L4T_APT_KEY=$L4T_APT_KEY \
-			#--build-arg L4T_APT_SOURCE="$(head -1 /etc/apt/sources.list.d/nvidia-l4t-apt-source.list | sed 's/'"$L4T_APT_SERVER_PUBLIC"'/'"$L4T_APT_SERVER"'/g')"
+	if [ -f "$CV_CSV.backup" ]; then
+		sudo mv $CV_CSV.backup $CV_CSV
+	fi
 fi
 
 
