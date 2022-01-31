@@ -19,13 +19,13 @@ ENV LANG=en_US.UTF-8
 
 
 # install geographic lib
-RUN mkdir /root/development
-RUN cd /root/development
-RUN git clone https://github.com/geographiclib/geographiclib geographiclib-code
-RUN mkdir /root/development/geographiclib-code/build
-RUN cd /root/development/geographiclib-code/build
-RUN cmake ..
-RUN make install
+RUN mkdir /root/development  && \
+	cd /root/development  && \
+	git clone https://github.com/geographiclib/geographiclib geographiclib-code  && \
+	mkdir /root/development/geographiclib-code/build  && \
+	cd /root/development/geographiclib-code/build  && \
+	cmake ..  && \
+	make install
 
 RUN cd /root
 RUN wget https://github.com/mavlink/mavros/raw/ros2/mavros/scripts/install_geographiclib_datasets.sh
