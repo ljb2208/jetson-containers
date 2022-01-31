@@ -34,12 +34,11 @@ RUN cd /root  && \
 
 
 #install geographic messages
-RUN /bin/bash -c "source ${ROS_ROOT}/install/setup.bash" && \
-	cd /opt/ros/foxy/install/share && \
+RUN cd /opt/ros/foxy/install/share && \
 	git clone https://github.com/ros-geographic-info/geographic_info.git  && \
 	cd geographic_info  && \
 	git checkout ros2  && \
-	colcon build --packages-select geographic_msgs --symlink-install  && \
+	/bin/bash -c "source ${ROS_ROOT}/install/setup.bash;colcon build --packages-select geographic_msgs --symlink-install"
 
 #insetall gtsam
 RUN cd /root/development  && \
@@ -70,11 +69,8 @@ RUN cd /root/development  && \
 RUN sudo apt-get install libeigen-stl-containers-dev
 
 # build ros packages
-RUN cd /root/ros2_ws && \	
-	/bin/bash -c "source ${ROS_ROOT}/install/setup.bash;colcon build --symlink-install"	
-	
-
-
+# RUN cd /root/ros2_ws && \	
+# 	/bin/bash -c "source ${ROS_ROOT}/install/setup.bash;colcon build --symlink-install"	
 
 RUN echo 'source /root/ros2_ws/install/local_setup.bash' >> /root/.bashrc	
 
