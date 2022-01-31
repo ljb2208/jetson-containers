@@ -34,7 +34,8 @@ RUN cd /root  && \
 
 
 #install geographic messages
-RUN cd /opt/ros/foxy/install/share && \
+RUN /bin/bash -c "source ${ROS_ROOT}/install/setup.bash" && \
+	cd /opt/ros/foxy/install/share && \
 	git clone https://github.com/ros-geographic-info/geographic_info.git  && \
 	cd geographic_info  && \
 	git checkout ros2  && \
