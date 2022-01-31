@@ -34,10 +34,10 @@ RUN cd /root  && \
 
 
 #install geographic messages
-RUN cd /opt/ros/foxy/install/share
+RUN cd /opt/ros/foxy/install/share && \
 	git clone https://github.com/ros-geographic-info/geographic_info.git  && \
 	cd geographic_info  && \
-	cd git checkout ros2  && \
+	git checkout ros2  && \
 	colcon build --packages-select geographic_msgs --symlink-install  && \
 
 #insetall gtsam
