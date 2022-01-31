@@ -23,9 +23,8 @@ RUN cd /root
 RUN mkdir development
 RUN cd development
 RUN git clone https://github.com/geographiclib/geographiclib geographiclib-code
-RUN cd geographiclib-code
-RUN mkdir build
-RUN cd build
+RUN mkdir /root/development/geographiclib-code/build
+RUN cd /root/development/geographiclib-code/build
 RUN cmake ..
 RUN make install
 
@@ -45,34 +44,30 @@ RUN colcon build --packages-select geographic_msgs --symlink-install
 #insetall gtsam
 RUN cd /root/development
 RUN git clone https://github.com/borglab/gtsam.git
-RUN cd gtsam
-RUN mkdir build
-RUN cd build
+RUN mkdir /root/development/gtsam/build
+RUN cd /root/development/gtsam/build
 RUN cmake -DGTSAM_INSTALL_GEOGRAPHICLIB=ON -DGTSAM_WITH_EIGEN_MKL=OFF ..
-run make install
+RUN make install
 
 #install eigen3 cmake module
 RUN cd /root/development
 RUN git clone https://github.com/ros2/eigen3_cmake_module.git
-RUN cd eigen3_cmake_module/
-RUN mkdir build
-RUN cd build
+RUN mkdir /root/development/eigen3_cmake_module/build
+RUN cd /root/development/eigen3_cmake_module/build
 RUN cmake ..
 RUN make install
 
 #install cnpy
 RUN cd /root/development
 RUN git clone https://github.com/rogersce/cnpy.git
-RUN cd cpny
-RUN mkdir build
-RUN cd build
+RUN mkdir /root/development/cpny/build
+RUN cd /root/development/cpny/build
 RUN cmake ..
 RUN make install
 
 
-
 # new commands
-sudo apt-get install libeigen-stl-containers-dev
+RUN sudo apt-get install libeigen-stl-containers-dev
 
 # build ros packages
 RUN cd /root/ros2_ws && \	
