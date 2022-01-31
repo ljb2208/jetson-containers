@@ -21,7 +21,7 @@ ENV LANG=en_US.UTF-8
 # install geographic lib
 RUN cd /root
 RUN mkdir development
-RUN cd development
+RUN cd /root/development
 RUN git clone https://github.com/geographiclib/geographiclib geographiclib-code
 RUN mkdir /root/development/geographiclib-code/build
 RUN cd /root/development/geographiclib-code/build
