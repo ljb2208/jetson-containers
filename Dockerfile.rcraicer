@@ -1,0 +1,88 @@
+#
+# this dockerfile roughly follows the 'Install ROS From Source' procedures from:
+#   https://index.ros.org/doc/ros2/Installation/Foxy/Linux-Development-Setup/
+#
+ARG BASE_IMAGE=ros:foxy-ros-base-l4t-r32.6.1
+FROM ${BASE_IMAGE}
+
+ARG ROS_PKG=ros_base
+ENV ROS_DISTRO=foxy
+ENV ROS_ROOT=/opt/ros/${ROS_DISTRO}
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+WORKDIR /workspace
+
+# change the locale from POSIX to UTF-8
+RUN locale-gen en_US en_US.UTF-8 && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8
+ENV LANG=en_US.UTF-8
+
+
+# install geographic lib
+RUN cd /root
+RUN mkdir development
+RUN cd development
+RUN git clone https://github.com/geographiclib/geographiclib geographiclib-code
+RUN cd geographiclib-code
+RUN mkdir build
+RUN cd build
+RUN cmake ..
+RUN make install
+
+RUN cd /root
+RUN wget https://github.com/mavlink/mavros/raw/ros2/mavros/scripts/install_geographiclib_datasets.sh
+RUN chmod +x install_geographiclib_datasets.sh
+RUN ./install_geographiclib_datasets.sh
+
+
+#install geographic messages
+RUN cd /opt/ros/foxy/install/share
+RUN git clone https://github.com/ros-geographic-info/geographic_info.git
+RUN cd geographic_info
+RUN cd git checkout ros2
+RUN colcon build --packages-select geographic_msgs --symlink-install
+
+#insetall gtsam
+RUN cd /root/development
+RUN git clone https://github.com/borglab/gtsam.git
+RUN cd gtsam
+RUN mkdir build
+RUN cd build
+RUN cmake -DGTSAM_INSTALL_GEOGRAPHICLIB=ON -DGTSAM_WITH_EIGEN_MKL=OFF ..
+run make install
+
+#install eigen3 cmake module
+RUN cd /root/development
+RUN git clone https://github.com/ros2/eigen3_cmake_module.git
+RUN cd eigen3_cmake_module/
+RUN mkdir build
+RUN cd build
+RUN cmake ..
+RUN make install
+
+#install cnpy
+RUN cd /root/development
+RUN git clone https://github.com/rogersce/cnpy.git
+RUN cd cpny
+RUN mkdir build
+RUN cd build
+RUN cmake ..
+RUN make install
+
+
+
+# new commands
+sudo apt-get install libeigen-stl-containers-dev
+
+# build ros packages
+RUN cd /root/ros2_ws && \	
+	/bin/bash -c "source ${ROS_ROOT}/install/setup.bash;colcon build --symlink-install"	
+	
+
+
+
+RUN echo 'source /root/ros2_ws/install/local_setup.bash' >> /root/.bashrc	
+
+ENTRYPOINT ["/ros_entrypoint.sh"]
+CMD ["bash"]
+WORKDIR /
