@@ -40,21 +40,19 @@ RUN cd /opt/ros/foxy/install/share && \
 	git checkout ros2  && \
 	/bin/bash -c "source ${ROS_ROOT}/install/setup.bash;colcon build --packages-select geographic_msgs --symlink-install"
 
-#insetall gtsam
+#install gtsam
 RUN cd /root/development  && \
 	git clone https://github.com/borglab/gtsam.git  && \
 	mkdir /root/development/gtsam/build  && \
 	cd /root/development/gtsam/build  && \
 	cmake -DGTSAM_INSTALL_GEOGRAPHICLIB=ON -DGTSAM_WITH_EIGEN_MKL=OFF ..  && \
-	make -j4 install  && \
+	make install 
 
 #install eigen3 cmake module
-RUN cd /root/development  && \
+RUN cd /opt/ros/foxy/install/share && \
 	git clone https://github.com/ros2/eigen3_cmake_module.git  && \
-	mkdir /root/development/eigen3_cmake_module/build  && \
-	cd /root/development/eigen3_cmake_module/build  && \
-	cmake ..  && \
-	make install
+	cd eigen3_cmake_module  && \	
+	/bin/bash -c "source ${ROS_ROOT}/install/setup.bash;colcon build --packages-select eigen3_cmake_module --symlink-install"
 
 #install cnpy
 RUN cd /root/development  && \
