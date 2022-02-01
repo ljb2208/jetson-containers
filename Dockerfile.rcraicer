@@ -18,6 +18,19 @@ RUN locale-gen en_US en_US.UTF-8 && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.
 ENV LANG=en_US.UTF-8
 
 
+#install cnpy
+RUN cd /root/development  && \
+	git clone https://github.com/rogersce/cnpy.git  && \
+	mkdir /root/development/cpny/build  && \
+	cd /root/development/cpny/build  && \
+	cmake ..  && \
+	make install
+
+
+# new commands
+RUN sudo apt-get install libeigen-stl-containers-dev
+
+
 # install geographic lib
 RUN mkdir /root/development  && \
 	cd /root/development  && \
@@ -48,23 +61,12 @@ RUN cd /root/development  && \
 	cmake -DGTSAM_INSTALL_GEOGRAPHICLIB=ON -DGTSAM_WITH_EIGEN_MKL=OFF ..  && \
 	make install 
 
-#install eigen3 cmake module
-RUN cd /opt/ros/foxy/install/share && \
-	git clone https://github.com/ros2/eigen3_cmake_module.git  && \
-	cd eigen3_cmake_module  && \	
-	/bin/bash -c "source ${ROS_ROOT}/install/setup.bash;colcon build --packages-select eigen3_cmake_module --symlink-install"
+# #install eigen3 cmake module
+# RUN cd /opt/ros/foxy/install/share && \
+# 	git clone https://github.com/ros2/eigen3_cmake_module.git  && \
+# 	cd eigen3_cmake_module  && \	
+# 	/bin/bash -c "source ${ROS_ROOT}/install/setup.bash;colcon build --packages-select eigen3_cmake_module --symlink-install"
 
-#install cnpy
-RUN cd /root/development  && \
-	git clone https://github.com/rogersce/cnpy.git  && \
-	mkdir /root/development/cpny/build  && \
-	cd /root/development/cpny/build  && \
-	cmake ..  && \
-	make install
-
-
-# new commands
-RUN sudo apt-get install libeigen-stl-containers-dev
 
 # build ros packages
 # RUN cd /root/ros2_ws && \	
