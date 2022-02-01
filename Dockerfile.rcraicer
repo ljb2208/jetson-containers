@@ -18,6 +18,16 @@ RUN locale-gen en_US en_US.UTF-8 && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.
 ENV LANG=en_US.UTF-8
 
 
+# install geographic lib
+RUN mkdir /root/development  && \
+	cd /root/development  && \
+	git clone https://github.com/geographiclib/geographiclib geographiclib-code  && \
+	mkdir /root/development/geographiclib-code/build  && \
+	cd /root/development/geographiclib-code/build  && \
+	cmake ..  && \
+	make install
+
+	
 #install cnpy
 RUN cd /root/development  && \
 	git clone https://github.com/rogersce/cnpy.git  && \
@@ -29,16 +39,6 @@ RUN cd /root/development  && \
 
 # new commands
 RUN sudo apt-get install libeigen-stl-containers-dev
-
-
-# install geographic lib
-RUN mkdir /root/development  && \
-	cd /root/development  && \
-	git clone https://github.com/geographiclib/geographiclib geographiclib-code  && \
-	mkdir /root/development/geographiclib-code/build  && \
-	cd /root/development/geographiclib-code/build  && \
-	cmake ..  && \
-	make install
 
 RUN cd /root  && \
 	wget https://github.com/mavlink/mavros/raw/ros2/mavros/scripts/install_geographiclib_datasets.sh  && \
