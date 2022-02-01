@@ -31,8 +31,8 @@ RUN mkdir /root/development  && \
 #install cnpy
 RUN cd /root/development  && \
 	git clone https://github.com/rogersce/cnpy.git  && \
-	mkdir /root/development/cpny/build  && \
-	cd /root/development/cpny/build  && \
+	mkdir /root/development/cnpy/build  && \
+	cd /root/development/cnpy/build  && \
 	cmake ..  && \
 	make install
 
